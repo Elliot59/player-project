@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from "axios";
 import { useState } from "react";
-import querystring from "querystring";
+
 
 
 const Signin = () => {
@@ -21,18 +21,20 @@ const PasswordHandle = (event) => {
 }
 
 const Clicked  = async() => {
-    querystring = require('querystring')
-    let data = querystring.stringify({
-        "username": name,
-        "password": password
-    })
- 
-    
+        let data = {
+            "name": name,
+            "password": password
+        }
+        
     await axios.post({
-    method: 'post',
-    url: 'http://127.0.0.1:8000/login/',
-    data: data,
-    headers: {'Content-Type': 'multipart/form-data'}})
+        method: 'post',
+        url: '',
+        data: data,
+        headers: {
+          "Authorization": "Token 1443cd023cb8360cf5dae757c950f76bddcaca6c", 
+          "content-type": "application/json"
+        }
+      })
     .then(res => console.log(res)).catch(err => console.log(err))
     console.log(data)
 
