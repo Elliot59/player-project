@@ -26,15 +26,11 @@ const Clicked  = async() => {
             "password": password
         }
         
-    await axios.post({
-        method: 'post',
-        url: '',
-        data: data,
-        headers: {
-          "Authorization": "Token 1443cd023cb8360cf5dae757c950f76bddcaca6c", 
-          "content-type": "application/json"
-        }
-      })
+    await axios.post('http://127.0.0.1:8000/login/', data,{   headers: {
+            "Authorization": "Token 26db08d20cdab541be5884daa43e349d7683ca42",
+            "content-type": "application/json"
+        }}
+      )
     .then(res => console.log(res)).catch(err => console.log(err))
     console.log(data)
 
