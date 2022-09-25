@@ -13,35 +13,32 @@ from .serializers import PlayerSerializer, UserSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils.decorators import method_decorator
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view,authentication_classes,permission_classes
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.authtoken.models import Token
 
 
-@authentication_classes((SessionAuthentication, TokenAuthentication, BasicAuthentication))
-class PlayerView(viewsets.ViewSet):
-
-    def list(self, request):
+class PlayerView(viewsets.ModelViewSet):
         queryset = Player.objects.all()
-        serializer = PlayerSerializer(queryset, many=True)
-        return Response(serializer.data)
+        serializer_class = PlayerSerializer
+        def list(self, request, *args, **kwargs):
+            return Response(PlayerSerializer(Player.objects.all(), many=True).data)
 
-@authentication_classes((SessionAuthentication, TokenAuthentication, BasicAuthentication))
+
 class PlayerSignUpView(viewsets.ModelViewSet):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
     permission_classes = [IsAuthenticated]
 
+    @csrf_exempt
     def list(self, request, *args, **kwargs):
         return Response({'get_method_status': False})
-
+    @csrf_exempt
     def create(self, request, *args, **kwargs):
         get_data = request.data
-        new_player = Player.objects.create(user=get_user_model().objects.create_user(username=get_data['name'],password=get_data['password']),
+        new_player = Player(user=get_user_model().objects.create_user(username=get_data['name'],password=get_data['password']),
                                                                             name=get_data['name'],
                                                                             age=get_data['age'],
                                                                             height=get_data['height'],
@@ -49,15 +46,20 @@ class PlayerSignUpView(viewsets.ModelViewSet):
                                                                             password=get_data['password'],
                                                                             confirm_password=get_data['confirm_password']
                                           )
-        new_player.save()
-        token, _ = Token.objects.get_or_create(user=get_data['name'])
+        token, _ = Token.objects.get_or_create(user=User.objects.get(username=get_data['name']))
+        if token:
+            new_player.save()
+        elif token == '':
+            new_player.save(commit=False)
+
         serializer = PlayerSerializer(new_player)
         return Response(serializer.data)
 
-@authentication_classes((SessionAuthentication, TokenAuthentication, BasicAuthentication))
+
 class LoginSerializerView(viewsets.ModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     @csrf_exempt
@@ -79,8 +81,11 @@ class LoginSerializerView(viewsets.ModelViewSet):
                 user = User.objects.get(username=username)
                 if user is not None:
                     if authenticate(request, username=username, password=password):
-                        token, _ = Token.objects.get_or_create(user=user)
-                        login(request, user)
+                        try:
+                            if Token.objects.get(user=user):
+                                login(request, user)
+                        except ObjectDoesNotExist:
+                            return HttpResponse({'Token error'})
                         a = Player.objects.filter(name=username).values_list('is_captain', flat=True).first()
                         try:
                             if a == True:

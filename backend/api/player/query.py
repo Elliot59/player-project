@@ -10,5 +10,5 @@ print(Player.objects.all())
     "height": "165",
     "email": "tazim@gmail.com",
     "password": "25795",
-    "confirm_password"
+    "confirm_password": "25795"
 }
