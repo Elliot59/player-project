@@ -60,7 +60,7 @@ class LoginSerializerView(viewsets.ModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @csrf_exempt
     def list(self, request, *args, **kwargs):
@@ -68,6 +68,7 @@ class LoginSerializerView(viewsets.ModelViewSet):
 
     @csrf_exempt
     def create(self, request, *args, **kwargs):
+
         get_data = request.data
         if request.method == "GET":
             if request.user.is_authenticated:
